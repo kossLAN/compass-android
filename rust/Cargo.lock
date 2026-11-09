@@ -618,7 +618,7 @@ dependencies = [
 
 [[package]]
 name = "compass-mobile"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "compass-config",
  "compass-core",
@@ -636,7 +636,7 @@ dependencies = [
 
 [[package]]
 name = "compass-mobile-bindgen"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "uniffi",
 ]
