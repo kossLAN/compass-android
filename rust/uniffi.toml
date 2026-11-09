@@ -1,0 +1,4 @@
+[bindings.kotlin]
+package_name = "dev.kosslan.compass.ffi"
+cdylib_name = "compass_mobile"
+android = true

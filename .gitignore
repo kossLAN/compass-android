@@ -1,0 +1,13 @@
+.gradle/
+build/
+/rust/target/
+/local.properties
+/.idea/
+*.iml
+.kotlin/
+/captures/
+/result*
+/.direnv
+/.envrc
+*.jks
+*.keystore

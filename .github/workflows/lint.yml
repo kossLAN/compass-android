@@ -1,0 +1,93 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nix:
+    name: Nix
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+
+      - name: Check formatting
+        run: nix fmt -- --ci
+
+  kotlin:
+    name: Kotlin
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+
+      - name: Check formatting
+        run: >-
+          nix shell --inputs-from . nixpkgs#ktlint --command
+          ktlint '**/*.kt' '**/*.kts' '!**/build/**' '!compass/**'
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - uses: cachix/install-nix-action@v31
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: cargo-${{ hashFiles('flake.lock', 'rust/Cargo.lock') }}
+          restore-keys: cargo-
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('flake.lock', 'gradle/libs.versions.toml', '**/*.gradle.kts') }}
+          restore-keys: gradle-
+
+      - name: Check Rust formatting
+        working-directory: rust
+        run: nix develop .. --command cargo fmt --all --check
+
+      - name: Lint Rust
+        working-directory: rust
+        run: >-
+          nix develop .. --command
+          cargo ndk --platform 29 --target arm64-v8a
+          clippy --locked --workspace --all-targets -- -D warnings
+
+      - name: Lint and build
+        run: nix develop --command gradle --no-daemon --continue :app:lintDebug :app:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compass-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html

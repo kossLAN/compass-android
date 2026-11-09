@@ -1,0 +1,13 @@
+[package]
+name = "compass-mobile-bindgen"
+description = "The uniffi bindgen, built apart from compass-mobile so running it skips the client"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/main.rs"
+
+[dependencies]
+uniffi = { version = "0.32.2", default-features = false, features = ["cli", "cargo-metadata"] }

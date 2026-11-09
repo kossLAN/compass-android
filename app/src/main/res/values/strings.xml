@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">compass</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_peers">Peers</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="activate_description">Connect to your mesh</string>
+
+    <string name="status_off">Off</string>
+    <string name="status_off_hint">Tap the compass to join your mesh</string>
+    <string name="status_connecting">Connecting</string>
+    <string name="status_connecting_hint">Reaching your lighthouses</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_degraded">Degraded</string>
+    <string name="status_failed">Not connected</string>
+    <plurals name="peers_online">
+        <item quantity="one">%1$d of %2$d peer online</item>
+        <item quantity="other">%1$d of %2$d peers online</item>
+    </plurals>
+
+    <string name="home_add_network">Add a network</string>
+    <string name="home_lighthouses">Lighthouses</string>
+    <string name="home_exit_node">Exit node %1$s</string>
+    <string name="exit_node_active">Routing internet traffic</string>
+    <string name="exit_node_blocked">Blocked until there is a direct path</string>
+    <string name="lighthouse_connecting">Connecting</string>
+    <string name="lighthouse_connected">Connected</string>
+    <string name="lighthouse_relay">Relay</string>
+    <string name="home_private_dns">Private DNS is set to %1$s, so Android skips the mesh resolver and mesh names do not resolve. Set Private DNS to Automatic to use them.</string>
+    <string name="home_private_dns_settings">Network settings</string>
+    <string name="copy_address">Copy address</string>
+    <string name="clip_address">Mesh address</string>
+
+    <string name="peers_disconnected">Connect to see the peers in your mesh</string>
+    <string name="peers_none">No peers yet</string>
+    <string name="peer_no_handshake">No handshake yet</string>
+    <string name="peer_transfer">Transfer</string>
+    <string name="peer_transfer_value">↓ %1$s · ↑ %2$s</string>
+    <string name="peer_handshake">Last handshake</string>
+    <string name="peer_path">Path</string>
+    <string name="peer_addresses">Addresses</string>
+    <string name="peer_connection">Connection</string>
+    <string name="peer_copy">Copy %1$s</string>
+    <string name="peer_use_exit">Use as exit node</string>
+    <string name="path_direct">Direct</string>
+    <string name="path_direct_endpoint">Direct · %1$s</string>
+    <string name="path_relay">Relay · %1$s</string>
+    <string name="path_offline">Offline</string>
+    <string name="path_none">No path</string>
+
+    <string name="settings_device">Device</string>
+    <string name="settings_hostname">Hostname</string>
+    <string name="settings_hostname_default">%1$s (from the device name)</string>
+    <string name="settings_hostname_hint">Lowercase letters, digits and hyphens. Leave empty to use the device name.</string>
+    <string name="settings_listen_port">Listen port</string>
+    <string name="settings_listen_port_hint">The UDP port WireGuard uses, from 1024 to 65535</string>
+    <string name="settings_networks">Networks</string>
+    <string name="settings_add_network">Add network</string>
+    <string name="settings_identity">Identity</string>
+    <string name="settings_public_key">Public key</string>
+    <string name="settings_public_key_missing">Not generated yet</string>
+    <string name="copy_public_key">Copy public key</string>
+    <string name="settings_regenerate_key">Regenerate key</string>
+    <string name="settings_regenerate_key_summary">Join as a new node</string>
+    <string name="settings_regenerate_key_warning">This device joins every mesh as a new node and may get new addresses and a new name.</string>
+    <string name="settings_system">System</string>
+    <string name="settings_always_on">Always-on VPN</string>
+    <string name="settings_always_on_summary">Keep the mesh up and block traffic without it, in the system VPN settings</string>
+    <string name="settings_version">Version</string>
+
+    <string name="mesh_exit_peer">Exit through %1$s</string>
+    <string name="mesh_custom_ca">Custom CA</string>
+
+    <string name="editor_add_title">Add network</string>
+    <string name="editor_edit_title">Edit network</string>
+    <string name="editor_explanation">Lighthouses that share an auth key serve one mesh.</string>
+    <string name="editor_lighthouse_url">Lighthouse URL</string>
+    <string name="editor_lighthouse_placeholder" translatable="false">https://lighthouse.example.com</string>
+    <string name="editor_add_lighthouse">Add lighthouse</string>
+    <string name="editor_remove_lighthouse">Remove lighthouse</string>
+    <string name="editor_auth_key">Auth key</string>
+    <string name="editor_show_auth_key">Show auth key</string>
+    <string name="editor_hide_auth_key">Hide auth key</string>
+    <string name="editor_ca">Certificate authority</string>
+    <string name="editor_ca_none">Trust public certificate authorities</string>
+    <string name="editor_ca_loaded">Also trust the chosen certificate</string>
+    <string name="editor_delete_title">Delete network?</string>
+    <string name="editor_delete_warning">This device leaves the mesh served by these lighthouses.</string>
+
+    <string name="problem_no_lighthouse">Add at least one lighthouse.</string>
+    <string name="problem_invalid_url">A lighthouse URL is not valid.</string>
+    <string name="problem_insecure_url">Lighthouses must use https.</string>
+    <string name="problem_duplicate_url">A lighthouse is listed twice.</string>
+    <plurals name="problem_too_many">
+        <item quantity="one">At most %1$d lighthouse is supported across all networks.</item>
+        <item quantity="other">At most %1$d lighthouses are supported across all networks.</item>
+    </plurals>
+    <string name="problem_no_auth_key">Enter the auth key for this network.</string>
+    <string name="problem_invalid_certificate">The chosen file is not a PEM certificate.</string>
+    <string name="problem_unreadable_certificate">The chosen file could not be read.</string>
+    <string name="problem_large_certificate">The chosen file is too large to be a certificate.</string>
+
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_choose">Choose</string>
+    <string name="action_regenerate">Regenerate</string>
+    <string name="action_disconnect">Disconnect</string>
+
+    <string name="notification_channel">Mesh connection</string>
+    <string name="notification_title">compass is on</string>
+    <string name="notification_text">Keeping this device on your mesh</string>
+
+    <string name="error_no_networks">Add a network in Settings first.</string>
+    <string name="error_stopped">The client stopped unexpectedly.</string>
+    <string name="error_vpn_not_allowed">compass is no longer allowed to set up a VPN.</string>
+</resources>

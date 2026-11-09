@@ -1,0 +1,39 @@
+[package]
+name = "compass-mobile"
+description = "Kotlin bindings for the compass client, running on a tunnel the app opens"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[workspace]
+members = ["bindgen"]
+
+[dependencies]
+compass-config = { path = "../compass/crates/config" }
+compass-core = { path = "../compass/crates/core" }
+compass-net = { path = "../compass/crates/net" }
+compass-proto = { path = "../compass/crates/proto" }
+
+ipnet = "2.12"
+thiserror = "2.0.17"
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "sync"] }
+tracing = "0.1.44"
+tracing-log = "0.2.0"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+uniffi = { version = "0.32.2", default-features = false }
+url = "2.5"
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+needless_pass_by_value = "allow"
+significant_drop_tightening = "allow"
+must_use_candidate = "allow"
