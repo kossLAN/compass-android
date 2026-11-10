@@ -555,7 +555,7 @@ dependencies = [
 
 [[package]]
 name = "compass-config"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "compass-proto",
  "ipnet",
@@ -568,7 +568,7 @@ dependencies = [
 
 [[package]]
 name = "compass-core"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -628,7 +628,7 @@ dependencies = [
 
 [[package]]
 name = "compass-net"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "arc-swap",
  "boringtun",
@@ -646,7 +646,7 @@ dependencies = [
 
 [[package]]
 name = "compass-proto"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "bytes",
