@@ -1,7 +1,7 @@
 [package]
 name = "compass-mobile-bindgen"
 description = "The uniffi bindgen, built apart from compass-mobile so running it skips the client"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 publish = false
 
