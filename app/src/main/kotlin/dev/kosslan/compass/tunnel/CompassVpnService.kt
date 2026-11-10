@@ -92,7 +92,6 @@ class CompassVpnService : VpnService() {
                     .setConfigureIntent(TunnelNotifications.openApp(this@CompassVpnService))
                     .setMtu(shape.mtu.toInt())
                     .setBlocking(false)
-                    .addDisallowedApplication(packageName)
 
             shape.addresses.forEach { builder.addAddress(it.address, it.prefixLength.toInt()) }
             shape.routes.forEach { builder.addRoute(it.address, it.prefixLength.toInt()) }
@@ -103,6 +102,12 @@ class CompassVpnService : VpnService() {
                 builder.establish()
                     ?: throw TunException.Failed(getString(R.string.error_vpn_not_allowed))
             return descriptor.detachFd()
+        }
+
+        override fun protect(socket: Int) {
+            if (!this@CompassVpnService.protect(socket)) {
+                throw TunException.Failed(getString(R.string.error_vpn_not_allowed))
+            }
         }
     }
 

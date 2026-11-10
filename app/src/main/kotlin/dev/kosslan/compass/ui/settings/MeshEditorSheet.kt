@@ -1,7 +1,5 @@
 package dev.kosslan.compass.ui.settings
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,16 +37,13 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import dev.kosslan.compass.R
+import dev.kosslan.compass.settings.Lighthouse
 import dev.kosslan.compass.settings.MAX_LIGHTHOUSES
 import dev.kosslan.compass.settings.MeshProblem
+import dev.kosslan.compass.ui.theme.mono
 import kotlinx.coroutines.launch
-
-/** PEM files rarely carry a certificate MIME type, so any file may be picked. */
-private val CERTIFICATE_TYPES = arrayOf("*/*")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,10 +53,6 @@ fun MeshEditorSheet(
 ) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    val pickCertificate =
-        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let(model::loadCertificate)
-        }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     val title = if (draft.saved) R.string.editor_edit_title else R.string.editor_add_title
 
@@ -90,10 +80,11 @@ fun MeshEditorSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            draft.lighthouses.forEachIndexed { index, url ->
-                LighthouseField(
-                    url = url,
-                    onChange = { model.setLighthouse(index, it) },
+            draft.lighthouses.forEachIndexed { index, lighthouse ->
+                LighthouseFields(
+                    lighthouse = lighthouse,
+                    onEndpointChange = { model.setEndpoint(index, it) },
+                    onPublicKeyChange = { model.setPublicKey(index, it) },
                     onRemove =
                         {
                             model.removeLighthouse(
@@ -116,14 +107,6 @@ fun MeshEditorSheet(
                     )
                 }
             }
-
-            AuthKeyField(draft.authKey, onChange = model::setAuthKey)
-
-            CertificateRow(
-                loaded = draft.caPem != null,
-                onChoose = { pickCertificate.launch(CERTIFICATE_TYPES) },
-                onClear = model::clearCertificate,
-            )
 
             draft.problem?.let { problem ->
                 Text(
@@ -176,21 +159,40 @@ fun MeshEditorSheet(
 }
 
 @Composable
-private fun LighthouseField(
-    url: String,
-    onChange: (String) -> Unit,
+private fun LighthouseFields(
+    lighthouse: Lighthouse,
+    onEndpointChange: (String) -> Unit,
+    onPublicKeyChange: (String) -> Unit,
     onRemove: (() -> Unit)?,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = url,
-            onValueChange = onChange,
-            label = { Text(stringResource(R.string.editor_lighthouse_url)) },
-            placeholder = { Text(stringResource(R.string.editor_lighthouse_placeholder)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.weight(1f),
-        )
+        ) {
+            OutlinedTextField(
+                value = lighthouse.endpoint,
+                onValueChange = onEndpointChange,
+                label = { Text(stringResource(R.string.editor_lighthouse_endpoint)) },
+                placeholder = { Text(stringResource(R.string.editor_lighthouse_placeholder)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = lighthouse.publicKey,
+                onValueChange = onPublicKeyChange,
+                label = { Text(stringResource(R.string.editor_lighthouse_key)) },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.mono,
+                keyboardOptions =
+                    KeyboardOptions(
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Ascii,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         if (onRemove != null) {
             IconButton(onClick = onRemove) {
@@ -204,93 +206,25 @@ private fun LighthouseField(
 }
 
 @Composable
-private fun AuthKeyField(
-    authKey: String,
-    onChange: (String) -> Unit,
-) {
-    var shown by rememberSaveable { mutableStateOf(false) }
-    val icon = if (shown) R.drawable.ic_visibility_off else R.drawable.ic_visibility
-    val action = if (shown) R.string.editor_hide_auth_key else R.string.editor_show_auth_key
-
-    OutlinedTextField(
-        value = authKey,
-        onValueChange = onChange,
-        label = { Text(stringResource(R.string.editor_auth_key)) },
-        singleLine = true,
-        visualTransformation =
-            if (shown) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        trailingIcon = {
-            IconButton(onClick = { shown = !shown }) {
-                Icon(painterResource(icon), contentDescription = stringResource(action))
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
-private fun CertificateRow(
-    loaded: Boolean,
-    onChoose: () -> Unit,
-    onClear: () -> Unit,
-) {
-    val summary = if (loaded) R.string.editor_ca_loaded else R.string.editor_ca_none
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.editor_ca), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = stringResource(summary),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        if (loaded) {
-            TextButton(onClick = onClear) { Text(stringResource(R.string.action_clear)) }
-        }
-
-        OutlinedButton(onClick = onChoose) { Text(stringResource(R.string.action_choose)) }
-    }
-}
-
-@Composable
 private fun MeshProblem.message(): String =
     when (this) {
         MeshProblem.NoLighthouse -> {
             stringResource(R.string.problem_no_lighthouse)
         }
 
-        MeshProblem.InvalidUrl -> {
-            stringResource(R.string.problem_invalid_url)
+        MeshProblem.InvalidEndpoint -> {
+            stringResource(R.string.problem_invalid_endpoint)
         }
 
-        MeshProblem.InsecureUrl -> {
-            stringResource(R.string.problem_insecure_url)
+        MeshProblem.InvalidPublicKey -> {
+            stringResource(R.string.problem_invalid_public_key)
         }
 
-        MeshProblem.DuplicateUrl -> {
-            stringResource(R.string.problem_duplicate_url)
+        MeshProblem.DuplicateLighthouse -> {
+            stringResource(R.string.problem_duplicate_lighthouse)
         }
 
         MeshProblem.TooManyLighthouses -> {
             pluralStringResource(R.plurals.problem_too_many, MAX_LIGHTHOUSES, MAX_LIGHTHOUSES)
-        }
-
-        MeshProblem.NoAuthKey -> {
-            stringResource(R.string.problem_no_auth_key)
-        }
-
-        MeshProblem.InvalidCertificate -> {
-            stringResource(R.string.problem_invalid_certificate)
-        }
-
-        MeshProblem.UnreadableCertificate -> {
-            stringResource(R.string.problem_unreadable_certificate)
-        }
-
-        MeshProblem.LargeCertificate -> {
-            stringResource(R.string.problem_large_certificate)
         }
     }

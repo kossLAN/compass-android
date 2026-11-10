@@ -62,7 +62,7 @@ class PeersViewModel(
         val meshByDomain =
             report.lighthouses
                 .mapNotNull { lighthouse ->
-                    val mesh = settings.meshes.firstOrNull { lighthouse.url in it.lighthouses }
+                    val mesh = settings.meshes.firstOrNull { it.serves(lighthouse.endpoint) }
                     val domain = lighthouse.mesh
                     if (mesh != null && domain != null) domain to mesh else null
                 }.toMap()

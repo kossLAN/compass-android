@@ -16,14 +16,6 @@ impl CompassError {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error, uniffi::Error)]
-pub enum LighthouseUrlError {
-    #[error("is not an https URL")]
-    Invalid,
-    #[error("must use https (http is only allowed to loopback)")]
-    Insecure,
-}
-
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum TunError {
     #[error("{reason}")]

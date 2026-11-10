@@ -29,7 +29,7 @@ pub enum PathKind {
 
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
 pub struct LighthouseStatus {
-    pub url: String,
+    pub endpoint: String,
     pub mesh: Option<String>,
     pub state: LighthouseState,
     pub relay: bool,
@@ -97,7 +97,7 @@ impl From<CoreReport> for StatusReport {
 impl From<CoreLighthouse> for LighthouseStatus {
     fn from(lighthouse: CoreLighthouse) -> Self {
         Self {
-            url: lighthouse.url.to_string(),
+            endpoint: lighthouse.endpoint,
             mesh: lighthouse.mesh.map(|mesh| mesh.to_string()),
             state: match lighthouse.state {
                 CoreLighthouseState::Connecting => LighthouseState::Connecting,
@@ -141,9 +141,7 @@ impl From<CorePeer> for PeerStatus {
                 CorePath::Direct(endpoint) => PathKind::Direct {
                     endpoint: endpoint.to_string(),
                 },
-                CorePath::Relay(url) => PathKind::Relay {
-                    lighthouse: url.to_string(),
-                },
+                CorePath::Relay(lighthouse) => PathKind::Relay { lighthouse },
                 CorePath::None => PathKind::None,
             },
             last_handshake_secs: peer.last_handshake_secs,

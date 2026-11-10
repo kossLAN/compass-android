@@ -25,7 +25,6 @@ tracing = "0.1.44"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 uniffi = { version = "0.32.2", default-features = false }
-url = "2.5"
 
 [lints.rust]
 unsafe_code = "deny"

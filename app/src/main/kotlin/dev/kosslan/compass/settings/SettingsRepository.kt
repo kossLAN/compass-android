@@ -95,11 +95,11 @@ class SettingsRepository(
             listenPort = settings.listenPort.toUShort(),
             lighthouses =
                 settings.meshes.flatMap { mesh ->
-                    mesh.lighthouses.map { url ->
+                    mesh.lighthouses.map { lighthouse ->
                         LighthouseSettings(
-                            url = url,
-                            authKey = mesh.authKey,
-                            caPem = mesh.caPem,
+                            endpoint = lighthouse.endpoint,
+                            publicKey = lighthouse.publicKey,
+                            mesh = mesh.id,
                             exitPeer = mesh.exitPeer,
                         )
                     }

@@ -10,7 +10,7 @@ import java.io.OutputStream
 import java.security.GeneralSecurityException
 import javax.crypto.AEADBadTagException
 
-/** Stores the settings encrypted as a whole, since they hold the node key and auth keys. */
+/** Stores the settings encrypted as a whole, since they hold the node key. */
 class SettingsSerializer(
     private val cipher: SecretCipher,
 ) : Serializer<CompassSettings> {

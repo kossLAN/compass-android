@@ -30,12 +30,10 @@ impl CompassClient {
     pub async fn start(
         settings: ClientSettings,
         network: UnderlyingNetwork,
-        trusted_certificates: Vec<Vec<u8>>,
         tun_provider: Arc<dyn TunProvider>,
     ) -> Result<Arc<Self>, CompassError> {
         let settings = settings.try_into()?;
-        let platform =
-            HostedPlatform::new(Arc::new(ForeignTun(tun_provider)), &trusted_certificates);
+        let platform = HostedPlatform::new(Arc::new(ForeignTun(tun_provider)));
         platform.set_underlying(network.into());
 
         let (started, client) = oneshot::channel();

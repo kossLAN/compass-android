@@ -1,17 +1,14 @@
 package dev.kosslan.compass.ui.settings
 
-import android.content.ContentResolver
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.kosslan.compass.ffi.CompassException
 import dev.kosslan.compass.ffi.publicKey
 import dev.kosslan.compass.settings.DEFAULT_LISTEN_PORT
-import dev.kosslan.compass.settings.LighthouseUrl
+import dev.kosslan.compass.settings.Lighthouse
 import dev.kosslan.compass.settings.Mesh
 import dev.kosslan.compass.settings.MeshProblem
 import dev.kosslan.compass.settings.SettingsRepository
-import dev.kosslan.compass.settings.parseLighthouse
 import dev.kosslan.compass.settings.validateMesh
 import dev.kosslan.compass.tunnel.TunnelController
 import dev.kosslan.compass.tunnel.TunnelState
@@ -27,12 +24,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.IOException
-import java.io.InputStream
 import java.util.UUID
-
-private const val MAX_CERTIFICATE_BYTES = 64 * 1024
 
 data class SettingsUiState(
     val hostname: String? = null,
@@ -43,13 +35,10 @@ data class SettingsUiState(
     val meshNames: Map<String, String> = emptyMap(),
 )
 
-/** A network being edited; kept here rather than in saved state since it holds an auth key. */
 data class MeshDraft(
     val id: String = UUID.randomUUID().toString(),
     val saved: Boolean = false,
-    val lighthouses: List<String> = listOf(""),
-    val authKey: String = "",
-    val caPem: String? = null,
+    val lighthouses: List<Lighthouse> = listOf(Lighthouse("", "")),
     val problem: MeshProblem? = null,
     val done: Boolean = false,
 )
@@ -57,7 +46,6 @@ data class MeshDraft(
 class SettingsViewModel(
     private val settings: SettingsRepository,
     tunnel: TunnelController,
-    private val resolver: ContentResolver,
 ) : ViewModel() {
     private val publicKeys =
         settings.settings
@@ -74,7 +62,7 @@ class SettingsViewModel(
                     ?.status
                     ?.lighthouses
                     .orEmpty()
-                    .associate { it.url to it.mesh }
+                    .associate { it.endpoint to it.mesh }
             }.distinctUntilChanged()
 
     val state: StateFlow<SettingsUiState> =
@@ -87,8 +75,9 @@ class SettingsViewModel(
                 meshes = current.meshes,
                 meshNames =
                     current.meshes.associate { mesh ->
-                        val domain = mesh.lighthouses.firstNotNullOfOrNull(domains::get)
-                        mesh.id to (domain ?: mesh.lighthouses.firstOrNull().orEmpty())
+                        val endpoints = mesh.lighthouses.map(Lighthouse::endpoint)
+                        val domain = endpoints.firstNotNullOfOrNull(domains::get)
+                        mesh.id to (domain ?: endpoints.firstOrNull().orEmpty())
                     },
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
@@ -116,47 +105,24 @@ class SettingsViewModel(
                 id = mesh.id,
                 saved = true,
                 lighthouses = mesh.lighthouses,
-                authKey = mesh.authKey,
-                caPem = mesh.caPem,
             )
     }
 
-    fun setLighthouse(
+    fun setEndpoint(
         index: Int,
-        url: String,
-    ) = change { draft ->
-        draft.copy(lighthouses = draft.lighthouses.toMutableList().apply { set(index, url) })
-    }
+        endpoint: String,
+    ) = changeLighthouse(index) { it.copy(endpoint = endpoint) }
 
-    fun addLighthouse() = change { it.copy(lighthouses = it.lighthouses + "") }
+    fun setPublicKey(
+        index: Int,
+        publicKey: String,
+    ) = changeLighthouse(index) { it.copy(publicKey = publicKey) }
+
+    fun addLighthouse() = change { it.copy(lighthouses = it.lighthouses + Lighthouse("", "")) }
 
     fun removeLighthouse(index: Int) =
         change { draft ->
             draft.copy(lighthouses = draft.lighthouses.filterIndexed { i, _ -> i != index })
-        }
-
-    fun setAuthKey(authKey: String) = change { it.copy(authKey = authKey) }
-
-    fun clearCertificate() = change { it.copy(caPem = null) }
-
-    fun loadCertificate(uri: Uri) =
-        launch {
-            val pem =
-                withContext(Dispatchers.IO) {
-                    try {
-                        resolver.openInputStream(uri)?.use(::readCertificate)
-                    } catch (_: IOException) {
-                        null
-                    } catch (_: SecurityException) {
-                        null
-                    }
-                }
-
-            when (pem) {
-                null -> fail(MeshProblem.UnreadableCertificate)
-                is Certificate.TooLarge -> fail(MeshProblem.LargeCertificate)
-                is Certificate.Read -> change { it.copy(caPem = pem.pem) }
-            }
         }
 
     fun dismiss() {
@@ -167,16 +133,13 @@ class SettingsViewModel(
         launch {
             val draft = editing.value ?: return@launch
             val current = settings.current()
-            val lighthouses = draft.lighthouses.map(String::trim).filter(String::isNotEmpty)
             val mesh =
                 Mesh(
                     id = draft.id,
                     lighthouses =
-                        lighthouses.map { url ->
-                            (parseLighthouse(url) as? LighthouseUrl.Valid)?.url ?: url
-                        },
-                    authKey = draft.authKey.trim(),
-                    caPem = draft.caPem,
+                        draft.lighthouses
+                            .map { Lighthouse(it.endpoint.trim(), it.publicKey.trim()) }
+                            .filterNot { it.endpoint.isEmpty() && it.publicKey.isEmpty() },
                     exitPeer = current.meshes.find { it.id == draft.id }?.exitPeer,
                 )
             val problem = validateMesh(mesh, current.meshes)
@@ -195,6 +158,18 @@ class SettingsViewModel(
             editing.update { it?.copy(done = true) }
         }
 
+    private fun changeLighthouse(
+        index: Int,
+        transform: (Lighthouse) -> Lighthouse,
+    ) = change { draft ->
+        draft.copy(
+            lighthouses =
+                draft.lighthouses.mapIndexed { i, lighthouse ->
+                    if (i == index) transform(lighthouse) else lighthouse
+                },
+        )
+    }
+
     private fun change(transform: (MeshDraft) -> MeshDraft) {
         editing.update { draft -> draft?.let { transform(it).copy(problem = null) } }
     }
@@ -206,41 +181,6 @@ class SettingsViewModel(
     private fun launch(block: suspend () -> Unit) {
         viewModelScope.launch { block() }
     }
-}
-
-private sealed interface Certificate {
-    data class Read(
-        val pem: String,
-    ) : Certificate
-
-    data object TooLarge : Certificate
-}
-
-private fun readCertificate(input: InputStream): Certificate {
-    val bytes = input.readAtMost(MAX_CERTIFICATE_BYTES + 1)
-
-    return if (bytes.size > MAX_CERTIFICATE_BYTES) {
-        Certificate.TooLarge
-    } else {
-        Certificate.Read(bytes.decodeToString())
-    }
-}
-
-private fun InputStream.readAtMost(limit: Int): ByteArray {
-    val buffer = ByteArray(limit)
-    var length = 0
-
-    while (length < limit) {
-        val read = read(buffer, length, limit - length)
-
-        if (read < 0) {
-            break
-        }
-
-        length += read
-    }
-
-    return buffer.copyOf(length)
 }
 
 private fun derivePublicKey(privateKey: String): String? =

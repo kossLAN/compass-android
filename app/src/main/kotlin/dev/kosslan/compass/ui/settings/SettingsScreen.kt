@@ -30,7 +30,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,13 +53,11 @@ private enum class Dialog { Hostname, ListenPort, RegenerateKey }
 @Composable
 fun SettingsScreen() {
     val container = LocalAppContainer.current
-    val context = LocalContext.current
     val model =
         viewModel {
             SettingsViewModel(
                 container.settings,
                 container.tunnel,
-                context.contentResolver,
             )
         }
     val state by model.state.collectAsStateWithLifecycle()
@@ -235,19 +232,17 @@ private fun MeshCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = mesh.lighthouses.joinToString("\n", transform = ::hostOf),
+                text = mesh.lighthouses.joinToString("\n") { hostOf(it.endpoint) },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
-                text =
-                    listOfNotNull(
-                        mesh.exitPeer?.let { stringResource(R.string.mesh_exit_peer, it) },
-                        mesh.caPem?.let { stringResource(R.string.mesh_custom_ca) },
-                    ).joinToString(" · "),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            mesh.exitPeer?.let { peer ->
+                Text(
+                    text = stringResource(R.string.mesh_exit_peer, peer),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

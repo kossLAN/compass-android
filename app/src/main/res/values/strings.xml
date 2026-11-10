@@ -63,48 +63,36 @@
     <string name="settings_public_key_missing">Not generated yet</string>
     <string name="copy_public_key">Copy public key</string>
     <string name="settings_regenerate_key">Regenerate key</string>
-    <string name="settings_regenerate_key_summary">Join as a new node</string>
-    <string name="settings_regenerate_key_warning">This device joins every mesh as a new node and may get new addresses and a new name.</string>
+    <string name="settings_regenerate_key_summary">Give this device a new key</string>
+    <string name="settings_regenerate_key_warning">Lighthouses stop letting this device in until they list its new public key.</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
 
     <string name="mesh_exit_peer">Exit through %1$s</string>
-    <string name="mesh_custom_ca">Custom CA</string>
 
     <string name="editor_add_title">Add network</string>
     <string name="editor_edit_title">Edit network</string>
-    <string name="editor_explanation">Lighthouses that share an auth key serve one mesh.</string>
-    <string name="editor_lighthouse_url">Lighthouse URL</string>
-    <string name="editor_lighthouse_placeholder" translatable="false">https://lighthouse.example.com</string>
+    <string name="editor_explanation">List every lighthouse of the mesh. Each one has to list the public key of this device too.</string>
+    <string name="editor_lighthouse_endpoint">Lighthouse address</string>
+    <string name="editor_lighthouse_placeholder" translatable="false">lighthouse.example.com:51820</string>
+    <string name="editor_lighthouse_key">Lighthouse public key</string>
     <string name="editor_add_lighthouse">Add lighthouse</string>
     <string name="editor_remove_lighthouse">Remove lighthouse</string>
-    <string name="editor_auth_key">Auth key</string>
-    <string name="editor_show_auth_key">Show auth key</string>
-    <string name="editor_hide_auth_key">Hide auth key</string>
-    <string name="editor_ca">Certificate authority</string>
-    <string name="editor_ca_none">Trust public certificate authorities</string>
-    <string name="editor_ca_loaded">Also trust the chosen certificate</string>
     <string name="editor_delete_title">Delete network?</string>
     <string name="editor_delete_warning">This device leaves the mesh served by these lighthouses.</string>
 
     <string name="problem_no_lighthouse">Add at least one lighthouse.</string>
-    <string name="problem_invalid_url">A lighthouse URL is not valid.</string>
-    <string name="problem_insecure_url">Lighthouses must use https.</string>
-    <string name="problem_duplicate_url">A lighthouse is listed twice.</string>
+    <string name="problem_invalid_endpoint">A lighthouse address needs a host and a port.</string>
+    <string name="problem_invalid_public_key">A lighthouse public key is not valid.</string>
+    <string name="problem_duplicate_lighthouse">A lighthouse is listed twice.</string>
     <plurals name="problem_too_many">
         <item quantity="one">At most %1$d lighthouse is supported across all networks.</item>
         <item quantity="other">At most %1$d lighthouses are supported across all networks.</item>
     </plurals>
-    <string name="problem_no_auth_key">Enter the auth key for this network.</string>
-    <string name="problem_invalid_certificate">The chosen file is not a PEM certificate.</string>
-    <string name="problem_unreadable_certificate">The chosen file could not be read.</string>
-    <string name="problem_large_certificate">The chosen file is too large to be a certificate.</string>
 
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
-    <string name="action_clear">Clear</string>
-    <string name="action_choose">Choose</string>
     <string name="action_regenerate">Regenerate</string>
     <string name="action_disconnect">Disconnect</string>
 

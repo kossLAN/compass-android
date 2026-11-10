@@ -15,7 +15,7 @@ fun handshakeAge(seconds: ULong): CharSequence =
         DateUtils.SECOND_IN_MILLIS,
     )
 
-fun hostOf(url: String): String = runCatching { java.net.URI(url).host }.getOrNull() ?: url
+fun hostOf(endpoint: String): String = endpoint.substringBeforeLast(':')
 
 fun plainText(
     label: String,

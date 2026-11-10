@@ -12,15 +12,18 @@ data class CompassSettings(
     val meshes: List<Mesh> = emptyList(),
 )
 
-/**
- * The lighthouses that share one auth key, which together serve one mesh, so their CA and exit
- * node are kept in one place.
- */
+/** The lighthouses that together serve one mesh, so its exit node is kept in one place. */
 @Serializable
 data class Mesh(
     val id: String,
-    val lighthouses: List<String>,
-    val authKey: String,
-    val caPem: String? = null,
+    val lighthouses: List<Lighthouse>,
     val exitPeer: String? = null,
+) {
+    fun serves(endpoint: String): Boolean = lighthouses.any { it.endpoint == endpoint }
+}
+
+@Serializable
+data class Lighthouse(
+    val endpoint: String,
+    val publicKey: String,
 )

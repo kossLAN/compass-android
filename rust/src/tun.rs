@@ -1,8 +1,9 @@
 use std::io;
+use std::os::fd::{AsRawFd as _, BorrowedFd};
 use std::sync::Arc;
 
 use compass_core::{TunProvider as CoreProvider, TunShape as CoreShape};
-use compass_net::AsyncDevice;
+use compass_net::{AsyncDevice, Protect};
 
 use crate::error::TunError;
 use crate::settings::IpPrefix;
@@ -21,9 +22,17 @@ pub struct TunShape {
 #[uniffi::export(with_foreign)]
 pub trait TunProvider: Send + Sync {
     fn establish(&self, shape: TunShape) -> Result<i32, TunError>;
+
+    fn protect(&self, socket: i32) -> Result<(), TunError>;
 }
 
 pub struct ForeignTun(pub Arc<dyn TunProvider>);
+
+impl Protect for ForeignTun {
+    fn protect(&self, socket: BorrowedFd<'_>) -> io::Result<()> {
+        self.0.protect(socket.as_raw_fd()).map_err(io::Error::other)
+    }
+}
 
 impl CoreProvider for ForeignTun {
     fn establish(&self, shape: &CoreShape) -> io::Result<AsyncDevice> {

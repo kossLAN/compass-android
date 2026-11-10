@@ -1,15 +1,14 @@
 use std::collections::BTreeSet;
 use std::net::IpAddr;
 
-use compass_config::{DnsConfig, ExitNodeConfig, MAX_LIGHTHOUSES};
+use compass_config::{DnsConfig, ExitNodeConfig, MAX_LIGHTHOUSES, is_endpoint};
 use compass_core::{
-    CaCertificate, ClientSettings as CoreSettings, LighthouseSettings as CoreLighthouse, Underlying,
+    ClientSettings as CoreSettings, LighthouseSettings as CoreLighthouse, Underlying,
 };
-use compass_proto::{AuthKey, DnsName, PrivateKey};
+use compass_proto::{DnsName, PrivateKey, PublicKey};
 use ipnet::IpNet;
-use url::{Host, Url};
 
-use crate::error::{CompassError, LighthouseUrlError};
+use crate::error::CompassError;
 
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
 pub struct IpPrefix {
@@ -25,12 +24,12 @@ pub struct ClientSettings {
     pub lighthouses: Vec<LighthouseSettings>,
 }
 
-/// Lighthouses that share an auth key serve one mesh, and must agree on `exit_peer`.
+/// Lighthouses with the same `mesh` serve one mesh, and must agree on `exit_peer`.
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
 pub struct LighthouseSettings {
-    pub url: String,
-    pub auth_key: String,
-    pub ca_pem: Option<String>,
+    pub endpoint: String,
+    pub public_key: String,
+    pub mesh: String,
     pub exit_peer: Option<String>,
 }
 
@@ -88,19 +87,18 @@ impl TryFrom<ClientSettings> for CoreSettings {
             .into_iter()
             .map(lighthouse)
             .collect::<Result<Vec<_>, _>>()?;
-        let urls: BTreeSet<&Url> = lighthouses
+        let keys: BTreeSet<&PublicKey> = lighthouses
             .iter()
-            .map(|lighthouse| &lighthouse.url)
+            .map(|lighthouse| &lighthouse.key)
             .collect();
 
-        if urls.len() != lighthouses.len() {
+        if keys.len() != lighthouses.len() {
             return Err(CompassError::invalid("a lighthouse is listed twice"));
         }
 
         Ok(Self {
-            private_key: Some(
-                PrivateKey::from_base64(&settings.private_key).map_err(CompassError::invalid)?,
-            ),
+            private_key: PrivateKey::from_base64(&settings.private_key)
+                .map_err(CompassError::invalid)?,
             hostname: Some(label(&settings.hostname)?),
             listen_port: settings.listen_port,
             lighthouses,
@@ -108,49 +106,28 @@ impl TryFrom<ClientSettings> for CoreSettings {
     }
 }
 
-/// Checks a lighthouse URL as the client does, and gives the form the client reports it in.
 #[uniffi::export]
-pub fn normalize_lighthouse_url(url: String) -> Result<String, LighthouseUrlError> {
-    lighthouse_url(&url).map(String::from)
-}
-
-fn lighthouse_url(raw: &str) -> Result<Url, LighthouseUrlError> {
-    let url: Url = raw
-        .trim()
-        .parse()
-        .map_err(|_| LighthouseUrlError::Invalid)?;
-    let loopback = match url.host() {
-        Some(Host::Domain(domain)) => domain == "localhost",
-        Some(Host::Ipv4(ip)) => ip.is_loopback(),
-        Some(Host::Ipv6(ip)) => ip.is_loopback(),
-        None => false,
-    };
-
-    match url.scheme() {
-        "https" => Ok(url),
-        "http" if loopback => Ok(url),
-        "http" => Err(LighthouseUrlError::Insecure),
-        _ => Err(LighthouseUrlError::Invalid),
-    }
+pub fn is_lighthouse_endpoint(endpoint: String) -> bool {
+    is_endpoint(&endpoint)
 }
 
 fn lighthouse(settings: LighthouseSettings) -> Result<CoreLighthouse, CompassError> {
-    let url = lighthouse_url(&settings.url)
-        .map_err(|error| CompassError::invalid(format!("\"{}\" {error}", settings.url)))?;
-
-    if settings.auth_key.trim().is_empty() {
-        return Err(CompassError::invalid(format!("\"{url}\" has no auth key")));
+    if !is_endpoint(&settings.endpoint) {
+        return Err(CompassError::invalid(format!(
+            "\"{}\" is not a host and a port",
+            settings.endpoint
+        )));
     }
 
     Ok(CoreLighthouse {
-        auth_key: AuthKey::new(settings.auth_key.trim()),
-        ca: settings.ca_pem.map(CaCertificate::Pem),
+        key: settings.public_key.parse().map_err(CompassError::invalid)?,
+        mesh: Some(settings.mesh),
         dns: DnsConfig::default(),
         exit_node: ExitNodeConfig {
             peer: settings.exit_peer.as_deref().map(label).transpose()?,
             advertise: None,
         },
-        url,
+        endpoint: settings.endpoint,
     })
 }
 

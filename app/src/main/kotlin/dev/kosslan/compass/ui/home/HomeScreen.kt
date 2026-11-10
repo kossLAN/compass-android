@@ -332,7 +332,7 @@ private fun LighthouseRow(lighthouse: LighthouseStatus) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                hostOf(lighthouse.url),
+                hostOf(lighthouse.endpoint),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

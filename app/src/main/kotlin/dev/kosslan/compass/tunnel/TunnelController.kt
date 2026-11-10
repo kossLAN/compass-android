@@ -9,7 +9,6 @@ import dev.kosslan.compass.ffi.TunProvider
 import dev.kosslan.compass.ffi.UnderlyingNetwork
 import dev.kosslan.compass.settings.CompassSettings
 import dev.kosslan.compass.settings.SettingsRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.BufferOverflow
@@ -29,7 +28,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.security.KeyStore
 import kotlin.time.Duration.Companion.seconds
 
 private val STATUS_INTERVAL = 1.seconds
@@ -71,8 +69,7 @@ class TunnelController(
             }
 
             val underlying = network.underlying.first()
-            val roots = withContext(Dispatchers.IO) { trustedCertificates() }
-            client = CompassClient.start(settings.clientSettings(started), underlying, roots, tun)
+            client = CompassClient.start(settings.clientSettings(started), underlying, tun)
             current.value = TunnelState.Running(null)
             follow(client, started, underlying)
         } catch (error: CompassException) {
@@ -141,9 +138,4 @@ class TunnelController(
             is CompassException.InvalidSettings -> error.reason
             is CompassException.Stopped -> context.getString(R.string.error_stopped)
         }
-}
-
-private fun trustedCertificates(): List<ByteArray> {
-    val store = KeyStore.getInstance("AndroidCAStore").apply { load(null) }
-    return store.aliases().toList().mapNotNull { store.getCertificate(it)?.encoded }
 }
