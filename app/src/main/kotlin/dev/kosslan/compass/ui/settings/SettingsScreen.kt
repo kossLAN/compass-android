@@ -1,7 +1,5 @@
 package dev.kosslan.compass.ui.settings
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -133,14 +131,7 @@ fun SettingsScreen() {
             )
         }
 
-        item { SectionTitle(R.string.settings_system) }
-        item {
-            Entry(
-                title = stringResource(R.string.settings_always_on),
-                summary = stringResource(R.string.settings_always_on_summary),
-                onClick = { context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS)) },
-            )
-        }
+        item { SectionTitle(R.string.settings_about) }
         item {
             Entry(
                 title = stringResource(R.string.settings_version),
