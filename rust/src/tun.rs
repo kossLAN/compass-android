@@ -1,5 +1,6 @@
+use std::ffi::CStr;
 use std::io;
-use std::os::fd::{AsRawFd as _, BorrowedFd};
+use std::os::fd::{AsFd as _, AsRawFd as _, BorrowedFd};
 use std::sync::Arc;
 
 use compass_core::{TunProvider as CoreProvider, TunShape as CoreShape};
@@ -22,6 +23,8 @@ pub struct TunShape {
 #[uniffi::export(with_foreign)]
 pub trait TunProvider: Send + Sync {
     fn establish(&self, shape: TunShape) -> Result<i32, TunError>;
+
+    fn await_routes(&self, interface_name: String) -> Result<(), TunError>;
 
     fn protect(&self, socket: i32) -> Result<(), TunError>;
 }
@@ -56,8 +59,26 @@ impl CoreProvider for ForeignTun {
         // SAFETY: the app detached `fd` from its owner and handed it over, so the device is the
         // only thing that uses and closes it.
         #[expect(unsafe_code, reason = "taking ownership of a descriptor from the app")]
-        unsafe {
-            AsyncDevice::from_fd(fd)
-        }
+        let device = unsafe { AsyncDevice::from_fd(fd) }?;
+
+        self.0
+            .await_routes(interface_name(device.as_fd())?)
+            .map_err(io::Error::other)?;
+        Ok(device)
     }
+}
+
+#[expect(
+    unsafe_code,
+    reason = "asking the kernel which interface a descriptor drives"
+)]
+fn interface_name(tun: BorrowedFd<'_>) -> io::Result<String> {
+    let mut request: libc::ifreq = unsafe { std::mem::zeroed() };
+
+    if unsafe { libc::ioctl(tun.as_raw_fd(), libc::TUNGETIFF, &raw mut request) } < 0 {
+        return Err(io::Error::last_os_error());
+    }
+
+    let name = unsafe { CStr::from_ptr(request.ifr_name.as_ptr()) };
+    Ok(name.to_string_lossy().into_owned())
 }

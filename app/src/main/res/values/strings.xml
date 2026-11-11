@@ -103,4 +103,5 @@
     <string name="error_no_networks">Add a network in Settings first.</string>
     <string name="error_stopped">The client stopped unexpectedly.</string>
     <string name="error_vpn_not_allowed">compass is no longer allowed to set up a VPN.</string>
+    <string name="error_vpn_not_routed">The system did not route traffic through the VPN.</string>
 </resources>

@@ -19,6 +19,7 @@ compass-net = { path = "../compass/crates/net" }
 compass-proto = { path = "../compass/crates/proto" }
 
 ipnet = "2.12"
+libc = "0.2.189"
 thiserror = "2.0.17"
 tokio = { version = "1.54.1", features = ["rt-multi-thread", "sync"] }
 tracing = "0.1.44"

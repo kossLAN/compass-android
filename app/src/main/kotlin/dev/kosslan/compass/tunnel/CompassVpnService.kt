@@ -15,7 +15,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.seconds
+
+private val ROUTE_TIMEOUT = 10.seconds
 
 class CompassVpnService : VpnService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -102,6 +108,16 @@ class CompassVpnService : VpnService() {
                 builder.establish()
                     ?: throw TunException.Failed(getString(R.string.error_vpn_not_allowed))
             return descriptor.detachFd()
+        }
+
+        override fun awaitRoutes(interfaceName: String) {
+            val network = (application as CompassApplication).container.network
+
+            runBlocking {
+                withTimeoutOrNull(ROUTE_TIMEOUT) {
+                    network.routedTunnel.first { it == interfaceName }
+                }
+            } ?: throw TunException.Failed(getString(R.string.error_vpn_not_routed))
         }
 
         override fun protect(socket: Int) {

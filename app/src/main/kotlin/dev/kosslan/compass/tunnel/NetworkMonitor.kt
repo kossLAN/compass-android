@@ -49,7 +49,30 @@ class NetworkMonitor(
 
     val privateDnsServer: Flow<String?> =
         physical.map { it?.privateDnsServerName }.distinctUntilChanged()
+
+    val routedTunnel: Flow<String> =
+        callbackFlow {
+            val callback =
+                object : ConnectivityManager.NetworkCallback() {
+                    override fun onLinkPropertiesChanged(
+                        network: Network,
+                        properties: LinkProperties,
+                    ) {
+                        properties.interfaceName?.let(::trySend)
+                    }
+                }
+
+            connectivity.registerNetworkCallback(tunnelRequest, callback)
+            awaitClose { connectivity.unregisterNetworkCallback(callback) }
+        }
 }
+
+private val tunnelRequest: NetworkRequest =
+    NetworkRequest
+        .Builder()
+        .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
+        .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+        .build()
 
 private val request: NetworkRequest =
     NetworkRequest

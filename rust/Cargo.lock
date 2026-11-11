@@ -611,6 +611,7 @@ dependencies = [
  "compass-net",
  "compass-proto",
  "ipnet",
+ "libc",
  "thiserror",
  "tokio",
  "tracing",
